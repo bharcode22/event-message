@@ -23,18 +23,37 @@ export class MinioUploadMusicEventListener {
                 if (!record) return;
 
                 const bucket = record.s3?.bucket?.name;
-                const objectKey = decodeURIComponent(record.s3?.object?.key || '');
                 const sizeMB = ((record.s3?.object?.size || 0) / (1024 * 1024)).toFixed(2);
                 const uploader = record.userIdentity?.principalId;
                 const eventTime = record.eventTime;
 
-                const message = `
-📂 *Bucket*: \`${bucket}\`
-🎶 *File*: ${objectKey}
-📏 *Size*: ${sizeMB} MB
-👤 *Uploaded By*: ${uploader}
-🕒 *Event Time*: ${eventTime}
-                `;
+                const key = parsed.Key || parsed.Records?.[0]?.s3?.object?.key;
+                const fileName = decodeURIComponent(key.split('/').pop() || "");
+                const title = fileName.replace(/\.[^/.]+$/, "");
+                const contentType = record.s3?.object?.contentType || "unknown";
+
+                let audioMessage: string | undefined;
+                if (contentType === 'audio/mpeg' || contentType === 'audio/wav') {
+                    audioMessage = `deteacing duration, please wait...`;
+                } else {
+                    audioMessage = `not an audio file. skip duration detection.`;
+                }
+
+const message = `
+Minio Upload Event Detected!
+
+📂 File: ${title}
+
+📏 Size: ${sizeMB} MB
+
+👤 Uploaded By: ${uploader}
+
+🕒 Event Time: ${eventTime}
+
+Type: ${contentType}
+
+🕒 ${audioMessage}
+`;
 
                 await this.telegramService.sendMessage(message);
                 this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
