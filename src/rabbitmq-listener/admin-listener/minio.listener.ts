@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
-import { TelegramBotService } from '../../telegram-bot/telegram-bot.service';
+import { TelegramBotServiceAdmin } from '../../telegram-bot/telegram-bot.service';
 
 export class MinioUploadMusicEventListener {
     private readonly logger = new Logger(MinioUploadMusicEventListener.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
 
-    constructor(private readonly telegramService: TelegramBotService) {}
+    constructor(private readonly telegramService: TelegramBotServiceAdmin) {}
 
     async handle(channel: any, exchange: string) {
         const q = await channel.assertQueue('', { exclusive: true });
@@ -61,6 +61,56 @@ Type: ${contentType}
 
             channel.ack(msg);
         });
+    }
+
+    private resetTimer(exchange: string, cb: () => Promise<void>) {
+        if (this.messageTimers[exchange]) {
+            clearTimeout(this.messageTimers[exchange]);
+        }
+        this.messageTimers[exchange] = setTimeout(cb, 5000);
+    }
+}
+
+export class DetectSongDuration {
+    private readonly logger = new Logger(DetectSongDuration.name);
+    private messageTimers: Record<string, NodeJS.Timeout> = {};
+
+    constructor(private readonly telegramService: TelegramBotServiceAdmin) {}
+
+    async handle(channel: any, exchange: string) {
+        const q = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(q.queue, exchange, '');
+
+        this.logger.log(`✅ Listening on exchange: ${exchange}`);
+
+        await channel.consume(q.queue, async (msg: any) => {
+            if (!msg) return;
+            this.logger.log(`[${exchange}] Message received: ${msg.content.toString()}`);
+            
+            const content = msg.content.toString();
+            const parsed = JSON.parse(content);
+
+            this.resetTimer(exchange, async () => {
+                this.logger.log(`[${exchange}] Timer executed`);
+
+                const fileName = parsed.tittle.split('/').pop() || parsed.tittle;
+
+const message = `
+🎵 Duration Detected
+
+- 🎶 Title: ${fileName}
+
+- ⏱️ Duration: ${parsed.duration}
+
+- 📅 Detected At: ${new Date(parsed.creaetdAt).toLocaleString("id-ID")}
+`;
+
+                await this.telegramService.sendMessage(message);
+            });
+
+            channel.ack(msg);
+        });
+
     }
 
     private resetTimer(exchange: string, cb: () => Promise<void>) {

@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
-import { TelegramBotService } from '../../telegram-bot/telegram-bot.service';
+import { TelegramBotServiceAdmin } from '../../telegram-bot/telegram-bot.service';
 
 export class AdminInfoListener {
     private readonly logger = new Logger(AdminInfoListener.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
 
-    constructor(private readonly telegramService: TelegramBotService) {}
+    constructor(private readonly telegramService: TelegramBotServiceAdmin) {}
 
     async handle(channel: any, exchange: string) {
         const q = await channel.assertQueue('', { exclusive: true });

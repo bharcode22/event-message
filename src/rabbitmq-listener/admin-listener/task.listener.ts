@@ -1,25 +1,34 @@
 import { Logger } from '@nestjs/common';
-import { TelegramBotService } from '../../telegram-bot/telegram-bot.service';
+import { TelegramBotServiceAdmin } from '../../telegram-bot/telegram-bot.service';
 
 export class CreateTaskListener {
     private readonly logger = new Logger(CreateTaskListener.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
+    private messageBuffer: Record<string, any[]> = {};
 
-    constructor(private readonly telegramService: TelegramBotService) {}
+    constructor(private readonly telegramService: TelegramBotServiceAdmin) {}
 
     async handle(channel: any, exchange: string) {
         const q = await channel.assertQueue('', { exclusive: true });
         await channel.bindQueue(q.queue, exchange, '');
 
-        this.logger.log(`✅ Listening on exchange: ${exchange}`);
-
         await channel.consume(q.queue, async (msg: any) => {
             if (!msg) return;
-            const content = msg.content.toString();
+            const content = JSON.parse(msg.content.toString());
+
+            if (!this.messageBuffer[exchange]) {
+                this.messageBuffer[exchange] = [];
+            }
+            this.messageBuffer[exchange].push(content);
 
             this.resetTimer(exchange, async () => {
-                await this.telegramService.sendMessage(`Exchange: [${exchange}]`);
-                this.logger.log(`📩 [${exchange}]`);
+                const tasks = this.messageBuffer[exchange];
+                this.messageBuffer[exchange] = [];
+
+                const summary = tasks[0] ? `• pod_id: ${tasks[0].pod_id}` : '';
+                await this.telegramService.sendMessage(`Create flow editor${summary ? `\n${summary}` : ''}`);
+
+                this.logger.log(`🗑️ [${exchange}] ${content}`);
             });
 
             channel.ack(msg);
@@ -38,20 +47,17 @@ export class DeleteTaskListener {
     private readonly logger = new Logger(DeleteTaskListener.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
 
-    constructor(private readonly telegramService: TelegramBotService) {}
+    constructor(private readonly telegramService: TelegramBotServiceAdmin) {}
 
     async handle(channel: any, exchange: string) {
         const q = await channel.assertQueue('', { exclusive: true });
         await channel.bindQueue(q.queue, exchange, '');
 
-        this.logger.log(`✅ Listening on exchange: ${exchange}`);
-
         await channel.consume(q.queue, async (msg: any) => {
             if (!msg) return;
             const content = msg.content.toString();
-
             this.resetTimer(exchange, async () => {
-                await this.telegramService.sendMessage(`Exchange: [${exchange}]`);
+                await this.telegramService.sendMessage(`Delete flow editor`);
                 this.logger.log(`🗑️ [${exchange}] ${content}`);
             });
 
