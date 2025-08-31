@@ -5,7 +5,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     await app.startAllMicroservices().then(() => {
-        console.log('Successfully connected to RabbitMQ and listening to events');
+        // console.log('Successfully connected to RabbitMQ and listening to events');
     });
 
     await app.listen(`${process.env.PORT}`);

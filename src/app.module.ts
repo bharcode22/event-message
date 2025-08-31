@@ -5,16 +5,16 @@ import { RabbitmqListenerModule } from './rabbitmq-listener/rabbitmq-listener.mo
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
+  controllers: [],
+  providers: [
+    AppService
+  ],
   imports: [
     TelegramBotModule,
     RabbitmqListenerModule, 
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-  ],
-  controllers: [],
-  providers: [
-    AppService
   ],
 })
 export class AppModule {}

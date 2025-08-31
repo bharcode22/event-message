@@ -1,49 +1,53 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as amqp from 'amqplib';
+import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
+import { RabbitmqConnectionService } from './rabbitmq.connection';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const conectionRabbitmq = `${process.env.RABBITMQ_URL}`;
-const testConnectionExchange = `${process.env.TEST_CONNECTION_RABBITMQ}`;
-
 @Injectable()
-export class RabbitmqListenerService implements OnModuleInit {
+export class RabbitmqListenerService implements OnApplicationBootstrap {
+    private readonly logger = new Logger(RabbitmqListenerService.name);
+    private messageTimers: Record<string, NodeJS.Timeout> = {};
+
     constructor(
-        private readonly telegramBot: TelegramBotService
+        private readonly rabbitmqService: RabbitmqConnectionService,
+        private readonly telegramService: TelegramBotService,
     ) {}
 
-    async onModuleInit() {
-        try {
-            const connection = await amqp.connect(conectionRabbitmq);
-            const channel = await connection.createChannel();
-            await channel.assertExchange(testConnectionExchange, "fanout", { durable: true });
-            const { queue } = await channel.assertQueue("", { exclusive: true });
-            await channel.bindQueue(queue, testConnectionExchange, "");
-            channel.prefetch(1);
+    async onApplicationBootstrap() {
+        const channel = await this.rabbitmqService.waitForChannel();
 
-            console.log(`\x1b[32mQueue: ${testConnectionExchange} ${queue}\x1b[0m`);
+        const exchanges = [
+            process.env.TEST_CONNECTION_RABBITMQ,
+            process.env.CREATE_TASK2_EXCHANGE,
+            process.env.DELETE_TASK2_EXCHANGE,
+        ].filter(Boolean);
 
-            channel.consume(
-                queue,
-                async (msg) => {
-                    if (!msg) return;
-                    try {
-                        const data = JSON.parse(msg.content.toString());
-                        console.log(data);
+        for (const exchange of exchanges) {
+            const q = await channel.assertQueue('', { exclusive: true });
+            await channel.bindQueue(q.queue, exchange, '');
 
-                        await this.telegramBot.sendMessage(`📢 Event baru: ${JSON.stringify(data)}`);
+            this.logger.log(`✅ Listening on exchange: ${exchange}`);
 
-                        channel.ack(msg);
-                    } catch (err) {
-                        console.error("\x1b[31m❌ Error processing message:", err, "\x1b[0m");
-                        channel.nack(msg, false, false);
+            await channel.consume(q.queue, async (msg: any) => {
+                if (msg) {
+                const content = msg.content.toString();
+                // this.logger.log(`📩 [${exchange}] ${content}`);
+                this.logger.log(`📩 [${exchange}]`);
+
+                if (exchange) {
+                    if (this.messageTimers[exchange]) {
+                        clearTimeout(this.messageTimers[exchange]);
                     }
-                },
-                { noAck: false }
-            );
-        } catch (err) {
-            console.error('❌ Error during RabbitMQ connection:', err);
+
+                    this.messageTimers[exchange] = setTimeout(async () => {
+                        await this.telegramService.sendMessage(`📩 [${exchange}]`);
+                    }, 5000);
+                }
+
+                channel.ack(msg);
+                }
+            });
         }
     }
 }

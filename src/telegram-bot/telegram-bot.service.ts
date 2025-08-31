@@ -11,7 +11,7 @@ export class TelegramBotService implements OnModuleInit {
 
   onModuleInit() {
     this.bot = new TelegramBot(this.token, { polling: false });
-    console.log('✅ Telegram bot connected');
+    // console.log('✅ Telegram bot connected');
   }
 
   async sendMessage(message: string) {
