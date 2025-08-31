@@ -1,9 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as amqp from 'amqplib';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-const testConnectionExchange = "test_connection_rabbitmq";
-const conectionRabbitmq = "amqp://guest:guest@192.168.199.10:5672";
+const conectionRabbitmq = `${process.env.RABBITMQ_URL}`;
+const testConnectionExchange = `${process.env.TEST_CONNECTION_RABBITMQ}`;
 
 @Injectable()
 export class RabbitmqListenerService implements OnModuleInit {

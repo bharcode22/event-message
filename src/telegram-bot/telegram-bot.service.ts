@@ -1,11 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import TelegramBot from 'node-telegram-bot-api';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 @Injectable()
 export class TelegramBotService implements OnModuleInit {
   private bot: TelegramBot;
-  private readonly token = "7907582347:AAHFFbSQOB4XskWVi2dN3Hy7X8phLbqzPCI";
-  private readonly chatId = "-1003076691771";
+  private readonly token = `${process.env.TELEGRAM_TOKEN}`;
+  private readonly chatId = `${process.env.TELEGRAM_CHAT_ID}`;
 
   onModuleInit() {
     this.bot = new TelegramBot(this.token, { polling: false });

@@ -8,6 +8,6 @@ async function bootstrap() {
         console.log('Successfully connected to RabbitMQ and listening to events');
     });
 
-    await app.listen(3000);
+    await app.listen(`${process.env.PORT}`);
 }
 bootstrap();
