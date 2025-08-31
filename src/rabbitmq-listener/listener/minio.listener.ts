@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { TelegramBotService } from '../../telegram-bot/telegram-bot.service';
 
-export class AdminInfoListener {
-    private readonly logger = new Logger(AdminInfoListener.name);
+export class MinioUploadMusicEventListener {
+    private readonly logger = new Logger(MinioUploadMusicEventListener.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
 
     constructor(private readonly telegramService: TelegramBotService) {}
@@ -17,23 +17,27 @@ export class AdminInfoListener {
             if (!msg) return;
             const content = msg.content.toString();
             const parsed = JSON.parse(content);
-            const admin = parsed.admin;
-            const detail = parsed.detail;
-            const message = `
-👤 *Admin*
-    - Username: ${admin.username}
-    - Full Name: ${admin.full_names}
-    - Email: ${admin.email}
-
-📝 *Detail*
-    - Action: ${detail.action}
-    - Table: ${detail.model}
-    - Created At: ${detail.createdAt}
-`.trim();
 
             this.resetTimer(exchange, async () => {
-                await this.telegramService.sendMessage(`${message}`);
-                this.logger.log(`📩 [${exchange}]`);
+                const record = parsed?.Records?.[0];
+                if (!record) return;
+
+                const bucket = record.s3?.bucket?.name;
+                const objectKey = decodeURIComponent(record.s3?.object?.key || '');
+                const sizeMB = ((record.s3?.object?.size || 0) / (1024 * 1024)).toFixed(2);
+                const uploader = record.userIdentity?.principalId;
+                const eventTime = record.eventTime;
+
+                const message = `
+📂 *Bucket*: \`${bucket}\`
+🎶 *File*: ${objectKey}
+📏 *Size*: ${sizeMB} MB
+👤 *Uploaded By*: ${uploader}
+🕒 *Event Time*: ${eventTime}
+                `;
+
+                await this.telegramService.sendMessage(message);
+                this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
             });
 
             channel.ack(msg);
