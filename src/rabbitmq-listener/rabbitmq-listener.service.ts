@@ -3,6 +3,8 @@ import { RabbitmqConnectionService } from './rabbitmq.connection';
 import { TelegramBotServiceAdmin,  TelegramBotServicePod } from '../telegram-bot/telegram-bot.service';
 import { CreateTaskListener, DeleteTaskListener } from './admin-listener/task.listener';
 import { AdminInfoListener } from './admin-listener/admin.listener';
+import { downloadFlowEditorJson } from './admin-listener/flow.editor.json';
+import { adminProcessId } from './admin-listener/process.id';
 import { MinioUploadMusicEventListener, DetectSongDuration } from './admin-listener/minio.listener';
 import { CreateTaskListenerPod, DeleteTaskAtPodListener } from './pod-listener/task.listener';
 @Injectable()
@@ -18,6 +20,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
 
         const listeners = [
             // admin listeners
+            { 
+                exchange: process.env.PROCESS_ID_FLOW_EDITOR, 
+                handler: new adminProcessId(this.telegramServiceAdmin) 
+            },
             { 
                 exchange: process.env.DELETE_TASK2_EXCHANGE, 
                 handler: new DeleteTaskListener(this.telegramServiceAdmin) 
@@ -37,6 +43,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.SONG_DURATION_EXCHANGE, 
                 handler: new DetectSongDuration(this.telegramServiceAdmin) 
+            },
+            { 
+                exchange: process.env.SAVE_FLOW_EDITOR_JSON, 
+                handler: new downloadFlowEditorJson(this.telegramServiceAdmin) 
             },
 
             // pod listeners

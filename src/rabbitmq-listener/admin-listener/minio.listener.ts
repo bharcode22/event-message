@@ -41,6 +41,7 @@ export class MinioUploadMusicEventListener {
 
 const message = `
 Minio Upload Event Detected!
+Path: ${key}
 
 📂 File: ${title}
 
