@@ -1,12 +1,16 @@
 import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { RabbitmqConnectionService } from './rabbitmq.connection';
 import { TelegramBotServiceAdmin,  TelegramBotServicePod } from '../telegram-bot/telegram-bot.service';
+
 import { CreateTaskListener, DeleteTaskListener } from './admin-listener/task.listener';
-import { AdminInfoListener } from './admin-listener/admin.listener';
 import { downloadFlowEditorJson, ApplyFlowEditorJson } from './admin-listener/flow.editor.json';
-import { adminProcessId } from './admin-listener/process.id';
 import { MinioUploadMusicEventListener, DetectSongDuration } from './admin-listener/minio.listener';
+import { flowEditorFileListener } from './admin-listener/flow.editor.file.listener';
+
+// pod
 import { SaveFlowEditorAtPod, DeleteTaskAtPodListener } from './pod-listener/task.listener';
+import { InfoFlowEditorFile } from './pod-listener/info.flow.editor.file';
+
 @Injectable()
 export class RabbitmqListenerService implements OnApplicationBootstrap {
     constructor(
@@ -52,6 +56,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
                 exchange: process.env.PUBLISH_EVENT_FLOW_EDITOR, 
                 handler: new ApplyFlowEditorJson(this.telegramServiceAdmin) 
             },
+            { 
+                exchange: process.env.IMAGE_EVENT, 
+                handler: new flowEditorFileListener(this.telegramServiceAdmin) 
+            },
 
             // pod listeners
             { 
@@ -61,6 +69,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.SAVE_FLOW_EDITOR_JSON_AT_POD, 
                 handler: new SaveFlowEditorAtPod(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_FLOW_EDITOR_FILE, 
+                handler: new InfoFlowEditorFile(this.telegramServicePod) 
             },
         ].filter(l => l.exchange);
 
