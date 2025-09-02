@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { TelegramBotServicePod } from '../../telegram-bot/telegram-bot.service';
 
-export class CreateTaskListenerPod {
-    private readonly logger = new Logger(CreateTaskListenerPod.name);
+export class SaveFlowEditorAtPod {
+    private readonly logger = new Logger(SaveFlowEditorAtPod.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
     private messageBuffer: Record<string, any[]> = {};
 
@@ -25,27 +25,31 @@ export class CreateTaskListenerPod {
                 const tasks = this.messageBuffer[exchange];
                 this.messageBuffer[exchange] = [];
 
-const summary = tasks
-  .map(task => {
-    if (typeof task.isReloaded !== "undefined") {
-      return `
-🔄 Reload Schedule
-=========================
-⚡ Status: ${task.isReloaded ? "Reloaded ✅" : "Failed ❌"}
-      `.trim();
-    }
+const summary = tasks.map(t => {
+  const pod = t.podData?.[0] || {};
+  return `
+📥 Flow Editor Applied at pod
 
-    return `
-📩 Unknown Message
-=========================
-${JSON.stringify(task, null, 2)}
-    `.trim();
-  })
-  .join("\n\n");
+📌 Pod Info:
+- 🆔 ID: ${pod.id}
+- 🔌 MAC: ${pod.mac_address_pod}
+- 📡 POD Name: ${pod.pod_name}
 
-await this.telegramService.sendMessage(summary);
-this.logger.log(`🗑️ [${exchange}] ${JSON.stringify(content)}`);
+📊 Data Summary:
+- 📂 Task: ${t.task}
+- 🔥 Igniter: ${t.igniter}
+- 🕒 Last State: ${t.last_state}
+- 🔗 Connection: ${t.connection}
+- 🎛️ Node Button: ${t.node_button}
+- ⚡ Node Output: ${t.node_output}
+  `.trim();
+}).join("\n\n");
 
+                if (summary.length > 0) {
+                    await this.telegramService.sendMessage(summary);
+                } else {
+                    this.logger.warn(`⚠️ [${exchange}] Received empty message, skipped sending`);
+                }
             });
 
             channel.ack(msg);
@@ -74,30 +78,18 @@ export class DeleteTaskAtPodListener {
             if (!msg) return;
             const content = JSON.parse(msg.content.toString());
 
-            this.resetTimer(exchange, async () => {
-                const pod = content.podData;
-                const data = content.data;
+            const messageText = 
+`🗑️ Flow Editor Deleted at pod
 
-const message = `
-🗑️ Delete Flow Editor at Pod
-=========================
-📌 Message: ${content.message}
+🧩 Node: ${content.deleteNode?.count ?? 0}
+🔘 Node Button: ${content.deleteNode_button?.count ?? 0}
+📤 Node Output: ${content.deleteNode_output?.count ?? 0}
+🔥 Igniter: ${content.deleteIgniter?.count ?? 0}
+📌 Last State: ${content.deleteLastState?.count ?? 0}
+🔗 Connections: ${content.deleteconnections?.count ?? 0}
+📋 Task: ${content.deleteTask?.count ?? 0}`;
 
-🔹 Pod Info:
-• IP: ${pod.ip_address}
-• pod_id: ${pod.id}
-• pod_name: ${pod.name}
-• mac_address_pod: ${pod.mac_address_pod}
-
-🔹 Data deleted:
-• Task Data: ${data.task_data}
-• Last State: ${data.last_state_data}
-• Igniters: ${data.igniterData}
-`;
-
-                await this.telegramService.sendMessage(message.trim());
-                this.logger.log(`🗑️ [${exchange}] ${JSON.stringify(content)}`);
-            });
+            await this.telegramService.sendMessage(messageText);
 
             channel.ack(msg);
         });
