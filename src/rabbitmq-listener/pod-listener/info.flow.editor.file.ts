@@ -25,24 +25,30 @@ this.resetTimer(exchange, async () => {
     const tasks = this.messageBuffer[exchange];
     this.messageBuffer[exchange] = [];
 
-    if (tasks.length > 0) {
-        const summary = tasks.map((task, idx) => {
-            const podList = task.podInfo.map(p => 
-                `  
-• Pod Name: ${p.pod_name} 
-• mac address pod: ${p.mac_address_pod}, 
+function escapeMarkdownV2(text: string): string {
+    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
+
+if (tasks.length > 0) {
+    const summary = tasks.map((task, idx) => {
+        const podList = task.podInfo.map((p: any) =>
+`• Pod Name: ${p.pod_name}
+• mac address pod: ${p.mac_address_pod}
 • pod_id: ${p.id}`
-            ).join("\n");
+        ).join("\n");
 
-            return `📂 Flow Editor File Downloaded\n\n` +
-                   `📝 File: \`${task.fileName}\`\n` +
+        return `📂 Flow Editor File Downloaded
 
-`📦 Consumer:${podList}`;
-        }).join("\n\n---\n\n");
+\`\`\`
+File        : ${task.fileName}
+📦 Consumer:
+${podList}
+\`\`\``;
+    }).join("\n\n---\n\n");
 
-        await this.telegramService.sendMessage(summary);
-        this.logger.log(`📩 [${exchange}] Sent Telegram summary`);
-    } else {
+    await this.telegramService.sendMessage(summary);
+    this.logger.log(`📩 [${exchange}] Sent Telegram summary`);
+} else {
         this.logger.warn(`⚠️ [${exchange}] Received empty message, skipped sending`);
     }
 });

@@ -62,10 +62,20 @@ export class DeleteTaskListener {
         await channel.consume(q.queue, async (msg: any) => {
             if (!msg) return;
             const content = msg.content.toString();
-            this.resetTimer(exchange, async () => {
-                await this.telegramService.sendMessage(`Delete flow editor`);
-                this.logger.log(`🗑️ [${exchange}] ${content}`);
-            });
+
+            function escapeMarkdownV2(text: string): string {
+                return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+            }
+
+            await this.telegramService.sendMessage(
+`
+\`\`\`
+Delete flow editor at admin
+pod_id : ${escapeMarkdownV2(content as string)}
+\`\`\`
+`
+            );
+            this.logger.log(`🗑️ [${exchange}] ${content}`);
 
             channel.ack(msg);
         });
