@@ -18,15 +18,21 @@ export class flowEditorFileListener {
             const content = msg.content.toString();
             const parsed = JSON.parse(content);
 
+            function escapeMarkdownV2(text: string): string {
+                return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+            }
+
 const formatted = `
 Flow Editor file uploaded
 
-📝 Event: ${parsed.event}
-📂 File Name: ${parsed.metadata.name}
-🖼️ File Path: ${parsed.file.image}
+\`\`\`
+📝 Event: ${escapeMarkdownV2(parsed.event)}
+📂 File Name: ${escapeMarkdownV2(parsed.metadata.name)}
+🖼️ File Path: ${escapeMarkdownV2(parsed.file.image)}
+\`\`\`
 `;
 
-            await this.telegramService.sendMessage(formatted);
+await this.telegramService.sendMessage(formatted, { parse_mode: 'MarkdownV2' });
             this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
 
             channel.ack(msg);

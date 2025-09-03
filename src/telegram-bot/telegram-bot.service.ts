@@ -16,12 +16,16 @@ export class TelegramBotServiceAdmin implements OnModuleInit {
     this.logger.log(`🚀 Admin Telegram bot connected`);
   }
 
-  async sendMessage(message: string) {
+  async sendMessage(message: string, options?: TelegramBot.SendMessageOptions) {
     if (!this.chatId) {
-      console.error('❌ CHAT_ID not configured');
+      this.logger.error('❌ CHAT_ID not configured');
       return;
     }
-    await this.bot.sendMessage(this.chatId, message);
+
+    await this.bot.sendMessage(this.chatId, message, {
+      parse_mode: 'MarkdownV2',
+      ...options,
+    });
   }
 }
 

@@ -19,7 +19,7 @@ export class downloadFlowEditorJson {
             const parsed = JSON.parse(content);
 
 function escapeMarkdownV2(text: string): string {
-  return String(text).replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    return String(text).replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }
 
 const formattedMessage = `
@@ -32,8 +32,8 @@ const formattedMessage = `
 `.trim();
 
 this.resetTimer(exchange, async () => {
-  await this.telegramService.sendMessage(formattedMessage);
-  this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
+    await this.telegramService.sendMessage(formattedMessage);
+    this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
 });
 
 channel.ack(msg);
@@ -66,17 +66,20 @@ export class ApplyFlowEditorJson {
             const content = msg.content.toString();
             const parsed = JSON.parse(content);
 
-            const formattedMessage = `
-📂 Flow Editor JSON applyed to pod
+            function escapeMarkdownV2(text: string): string {
+                return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+            }
 
-- 🆔 Pod ID: \`${parsed.pod_id}\`
-
-- 📁 File Name: \`${parsed.filename}\`
+const formattedMessage = `
+📂 Flow Editor JSON applied admin to pod
+\`\`\`
+- 🆔 Pod ID: \`${escapeMarkdownV2(parsed.pod_id)}\`
+- 📁 File Name: \`${escapeMarkdownV2(parsed.filename)}\`
+\`\`\`
 `;
 
             this.resetTimer(exchange, async () => {
-                await this.telegramService.sendMessage(formattedMessage);
-                this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
+                await this.telegramService.sendMessage(formattedMessage, { parse_mode: 'MarkdownV2' });
             });
 
             channel.ack(msg);

@@ -39,24 +39,44 @@ export class MinioUploadMusicEventListener {
                     audioMessage = `not an audio file. skip duration detection.`;
                 }
 
-const message = `
-Minio Upload Event Detected!
-Path: ${key}
+                function escapeMarkdownV2(text: string): string {
+                    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+                }
 
-📂 File: ${title}
+function formatMinioMessage({
+    key,
+    title,
+    sizeMB,
+    uploader,
+    eventTime,
+    contentType,
+    audioMessage,
+}: any): string {
+    return `📡 *MinIO Upload Event Detected* 📡
 
-📏 Size: ${sizeMB} MB
+\`\`\`
+File        : ${escapeMarkdownV2(title)}
+Path        : ${escapeMarkdownV2(key)}
+Size        : ${escapeMarkdownV2(sizeMB + ' MB')}
+Uploaded By : ${escapeMarkdownV2(uploader)}
+Event Time  : ${escapeMarkdownV2(eventTime)}
+Type        : ${escapeMarkdownV2(contentType)}
+\`\`\`
 
-👤 Uploaded By: ${uploader}
+🎧 ${escapeMarkdownV2(audioMessage)}`;
+}
 
-🕒 Event Time: ${eventTime}
+                const message = formatMinioMessage({
+                    key,
+                    title,
+                    sizeMB,
+                    uploader,
+                    eventTime,
+                    contentType,
+                    audioMessage,
+                });
 
-Type: ${contentType}
-
-🕒 ${audioMessage}
-`;
-
-                await this.telegramService.sendMessage(message);
+                await this.telegramService.sendMessage(message, { parse_mode: 'MarkdownV2' });
                 this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
             });
 
@@ -81,37 +101,39 @@ export class DetectSongDuration {
     async handle(channel: any, exchange: string) {
         const q = await channel.assertQueue('', { exclusive: true });
         await channel.bindQueue(q.queue, exchange, '');
-
         this.logger.log(`✅ Listening on exchange: ${exchange}`);
 
         await channel.consume(q.queue, async (msg: any) => {
             if (!msg) return;
-            this.logger.log(`[${exchange}] Message received: ${msg.content.toString()}`);
-            
-            const content = msg.content.toString();
-            const parsed = JSON.parse(content);
+
+            const parsed = JSON.parse(msg.content.toString());
+            const fileName = parsed.tittle?.split('/').pop() || parsed.tittle;
 
             this.resetTimer(exchange, async () => {
                 this.logger.log(`[${exchange}] Timer executed`);
 
-                const fileName = parsed.tittle.split('/').pop() || parsed.tittle;
+function formatDurationMessage(parsed: any, fileName: string): string {
+    const detectedAt = parsed.creaetdAt
+        ? new Date(parsed.creaetdAt).toLocaleString('id-ID')
+        : 'unknown';
 
-const message = `
-🎵 Duration Detected
+    return `
+🎵 *Duration Detected* 🎵
 
-- 🎶 Title: ${fileName}
+\`\`\`
+🎶 Title       : ${fileName}
+⏱️ Duration    : ${parsed.duration}
+📅 Detected At : ${detectedAt}
+\`\`\`
+`.trim();
+}
 
-- ⏱️ Duration: ${parsed.duration}
-
-- 📅 Detected At: ${new Date(parsed.creaetdAt).toLocaleString("id-ID")}
-`;
-
-                await this.telegramService.sendMessage(message);
+                    const message = formatDurationMessage(parsed, fileName);
+                    await this.telegramService.sendMessage(message, { parse_mode: 'MarkdownV2' });
             });
 
             channel.ack(msg);
         });
-
     }
 
     private resetTimer(exchange: string, cb: () => Promise<void>) {
