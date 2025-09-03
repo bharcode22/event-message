@@ -25,24 +25,33 @@ export class SaveFlowEditorAtPod {
                 const tasks = this.messageBuffer[exchange];
                 this.messageBuffer[exchange] = [];
 
+function escapeMarkdownV2(text: string): string {
+  return String(text).replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
+
 const summary = tasks.map(t => {
   const pod = t.podData?.[0] || {};
+
   return `
-📥 Flow Editor Applied at pod
+📥 *Flow Editor Applied at Pod*
 
-📌 Pod Info:
-- 🆔 ID: ${pod.id}
-- 🔌 MAC: ${pod.mac_address_pod}
-- 📡 POD Name: ${pod.pod_name}
+📌 *Pod Info:*
+\`\`\`
+🆔  ID       : ${escapeMarkdownV2(pod.id)}
+🔌  MAC      : ${escapeMarkdownV2(pod.mac_address_pod)}
+📡  POD Name : ${escapeMarkdownV2(pod.pod_name)}
+\`\`\`
 
-📊 Data Summary:
-- 📂 Task: ${t.task}
-- 🔥 Igniter: ${t.igniter}
-- 🕒 Last State: ${t.last_state}
-- 🔗 Connection: ${t.connection}
-- 🎛️ Node Button: ${t.node_button}
-- ⚡ Node Output: ${t.node_output}
-  `.trim();
+📊 *Data Summary:*
+\`\`\`
+📂  Task         : ${escapeMarkdownV2(t.task)}
+🔥  Igniter      : ${escapeMarkdownV2(t.igniter)}
+🕒  Last State   : ${escapeMarkdownV2(t.last_state)}
+🔗  Connection   : ${escapeMarkdownV2(t.connection)}
+🎛️  Node Button  : ${escapeMarkdownV2(t.node_button)}
+⚡  Node Output  : ${escapeMarkdownV2(t.node_output)}
+\`\`\`
+`.trim();
 }).join("\n\n");
 
                 if (summary.length > 0) {
@@ -78,20 +87,28 @@ export class DeleteTaskAtPodListener {
             if (!msg) return;
             const content = JSON.parse(msg.content.toString());
 
-            const messageText = 
-`🗑️ Flow Editor Deleted at pod
+function escapeMarkdownV2(text: string): string {
+    return String(text).replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
 
-🧩 Node: ${content.deleteNode?.count ?? 0}
-🔘 Node Button: ${content.deleteNode_button?.count ?? 0}
-📤 Node Output: ${content.deleteNode_output?.count ?? 0}
-🔥 Igniter: ${content.deleteIgniter?.count ?? 0}
-📌 Last State: ${content.deleteLastState?.count ?? 0}
-🔗 Connections: ${content.deleteconnections?.count ?? 0}
-📋 Task: ${content.deleteTask?.count ?? 0}`;
+const messageText = `
+🗑️ *Flow Editor Deleted at Pod*
 
-            await this.telegramService.sendMessage(messageText);
+\`\`\`
+🧩  Node           : ${escapeMarkdownV2(content.deleteNode?.count ?? 0)}
+🔘  Node Button    : ${escapeMarkdownV2(content.deleteNode_button?.count ?? 0)}
+📤  Node Output    : ${escapeMarkdownV2(content.deleteNode_output?.count ?? 0)}
+🔥  Igniter        : ${escapeMarkdownV2(content.deleteIgniter?.count ?? 0)}
+📌  Last State     : ${escapeMarkdownV2(content.deleteLastState?.count ?? 0)}
+🔗  Connections    : ${escapeMarkdownV2(content.deleteconnections?.count ?? 0)}
+📋  Task           : ${escapeMarkdownV2(content.deleteTask?.count ?? 0)}
+\`\`\`
+`.trim();
 
-            channel.ack(msg);
+await this.telegramService.sendMessage(messageText, { parse_mode: 'MarkdownV2' });
+
+channel.ack(msg);
+
         });
     }
 

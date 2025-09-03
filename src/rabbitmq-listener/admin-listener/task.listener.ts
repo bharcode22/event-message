@@ -1,6 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { TelegramBotServiceAdmin } from '../../telegram-bot/telegram-bot.service';
 
+const escapeMarkdownV2 = (text: string) =>
+text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+
 export class CreateTaskListener {
     private readonly logger = new Logger(CreateTaskListener.name);
     private messageTimers: Record<string, NodeJS.Timeout> = {};
@@ -25,7 +28,10 @@ export class CreateTaskListener {
                 const tasks = this.messageBuffer[exchange];
                 this.messageBuffer[exchange] = [];
 
-                const summary = tasks[0] ? `• pod_id: ${tasks[0].pod_id}` : '';
+const summary = tasks[0]
+  ? `• *pod_id*: \`${escapeMarkdownV2(tasks[0].pod_id)}\``
+: '';
+
                 await this.telegramService.sendMessage(`Create flow editor${summary ? `\n${summary}` : ''}`);
 
                 this.logger.log(`🗑️ [${exchange}] ${content}`);

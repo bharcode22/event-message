@@ -18,20 +18,26 @@ export class downloadFlowEditorJson {
             const content = msg.content.toString();
             const parsed = JSON.parse(content);
 
-            const formattedMessage = `
-📂 Flow Editor JSON created
+function escapeMarkdownV2(text: string): string {
+  return String(text).replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
 
-- 🆔 Pod ID: \`${parsed.pod_id}\`
+const formattedMessage = `
+📂 *Flow Editor JSON Created*
 
-- 📁 File Path: \`${parsed.filePath}\`
-`;
+\`\`\`
+🆔  Pod ID    : ${escapeMarkdownV2(parsed.pod_id)}
+📁  File Path : ${escapeMarkdownV2(parsed.filePath)}
+\`\`\`
+`.trim();
 
-            this.resetTimer(exchange, async () => {
-                await this.telegramService.sendMessage(formattedMessage);
-                this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
-            });
+this.resetTimer(exchange, async () => {
+  await this.telegramService.sendMessage(formattedMessage);
+  this.logger.log(`📩 [${exchange}] Event forwarded to Telegram`);
+});
 
-            channel.ack(msg);
+channel.ack(msg);
+
         });
     }
 

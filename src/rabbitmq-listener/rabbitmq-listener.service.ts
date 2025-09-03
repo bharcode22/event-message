@@ -2,6 +2,7 @@ import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { RabbitmqConnectionService } from './rabbitmq.connection';
 import { TelegramBotServiceAdmin,  TelegramBotServicePod } from '../telegram-bot/telegram-bot.service';
 
+// admin
 import { CreateTaskListener, DeleteTaskListener } from './admin-listener/task.listener';
 import { downloadFlowEditorJson, ApplyFlowEditorJson } from './admin-listener/flow.editor.json';
 import { MinioUploadMusicEventListener, DetectSongDuration } from './admin-listener/minio.listener';
@@ -10,6 +11,7 @@ import { flowEditorFileListener } from './admin-listener/flow.editor.file.listen
 // pod
 import { SaveFlowEditorAtPod, DeleteTaskAtPodListener } from './pod-listener/task.listener';
 import { InfoFlowEditorFile } from './pod-listener/info.flow.editor.file';
+import { DockerEventListener } from './pod-listener/docker.event.listener';
 
 @Injectable()
 export class RabbitmqListenerService implements OnApplicationBootstrap {
@@ -73,6 +75,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.INFO_FLOW_EDITOR_FILE, 
                 handler: new InfoFlowEditorFile(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.DOCKER_EVENTS, 
+                handler: new DockerEventListener(this.telegramServicePod) 
             },
         ].filter(l => l.exchange);
 
