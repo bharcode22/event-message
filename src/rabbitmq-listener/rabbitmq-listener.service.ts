@@ -1,5 +1,5 @@
 import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
-import { RabbitmqConnectionService } from './rabbitmq.connection';
+import { RabbitmqConnectionService, RabbitmqGlobalConnectionService } from './rabbitmq.connection';
 import { TelegramBotServiceAdmin,  TelegramBotServicePod } from '../telegram-bot/telegram-bot.service';
 
 // admin
@@ -19,14 +19,23 @@ import { SaveSoundTaskFile, SaveSoundTaskFileExist, SaveSoundTaskFileEvent } fro
 export class RabbitmqListenerService implements OnApplicationBootstrap {
     constructor(
         private readonly rabbitmqService: RabbitmqConnectionService,
+        private readonly rabbitmqGlobalService: RabbitmqGlobalConnectionService,
         private readonly telegramServiceAdmin: TelegramBotServiceAdmin,
         private readonly telegramServicePod: TelegramBotServicePod,
     ) {}
 
     async onApplicationBootstrap() {
+        const globalChannel = await this.rabbitmqGlobalService.waitForChannel();
         const channel = await this.rabbitmqService.waitForChannel();
 
-        const listeners = [
+        const globalListener = [
+            { 
+                exchange: process.env.MINIO_TO_RABBITMQ, 
+                handler: new MinioUploadMusicEventListener(this.telegramServiceAdmin) 
+            },
+        ];
+
+        const SpesifikListeners = [
             // admin listeners
             // { 
             //     exchange: process.env.PROCESS_ID_FLOW_EDITOR, 
@@ -43,10 +52,6 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.CREATE_TASK2_EXCHANGE, 
                 handler: new CreateTaskListener(this.telegramServiceAdmin) 
-            },
-            { 
-                exchange: process.env.MINIO_TO_RABBITMQ, 
-                handler: new MinioUploadMusicEventListener(this.telegramServiceAdmin) 
             },
             { 
                 exchange: process.env.SONG_DURATION_EXCHANGE, 
@@ -108,7 +113,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             },
         ].filter(l => l.exchange);
 
-        for (const { exchange, handler } of listeners) {
+        for (const { exchange, handler } of globalListener.filter(l => l.exchange)) {
+            await handler.handle(globalChannel, exchange!);
+        }
+        for (const { exchange, handler } of SpesifikListeners.filter(l => l.exchange)) {
             await handler.handle(channel, exchange!);
         }
     }
