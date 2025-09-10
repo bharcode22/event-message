@@ -91,10 +91,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
                 exchange: process.env.INFO_DOWNLOAD_MULMED, 
                 handler: new SaveMultimnediaFile(this.telegramServicePod) 
             },
-            { 
-                exchange: process.env.INFO_DOWNLOAD_MULMED_EXIST, 
-                handler: new SaveMultimnediaFileExist(this.telegramServicePod) 
-            },
+            // { 
+            //     exchange: process.env.INFO_DOWNLOAD_MULMED_EXIST, 
+            //     handler: new SaveMultimnediaFileExist(this.telegramServicePod) 
+            // },
             { 
                 exchange: process.env.INFO_DOWNLOAD_MULMED_EVENT, 
                 handler: new SaveMultimediaFileEvent(this.telegramServicePod) 
@@ -103,10 +103,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
                 exchange: process.env.INFO_DOWNLOAD_SOUND_TASK, 
                 handler: new SaveSoundTaskFile(this.telegramServicePod) 
             },
-            { 
-                exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EXIST, 
-                handler: new SaveSoundTaskFileExist(this.telegramServicePod) 
-            },
+            // { 
+            //     exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EXIST, 
+            //     handler: new SaveSoundTaskFileExist(this.telegramServicePod) 
+            // },
             { 
                 exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EVENT, 
                 handler: new SaveSoundTaskFileEvent(this.telegramServicePod) 
