@@ -12,6 +12,8 @@ import { flowEditorFileListener } from './admin-listener/flow.editor.file.listen
 import { SaveFlowEditorAtPod, DeleteTaskAtPodListener } from './pod-listener/task.listener';
 import { InfoFlowEditorFile } from './pod-listener/info.flow.editor.file';
 import { DockerEventListener } from './pod-listener/docker.event.listener';
+import { SaveMultimnediaFile, SaveMultimnediaFileExist, SaveMultimediaFileEvent } from './pod-listener/multimedia.listener';
+import { SaveSoundTaskFile, SaveSoundTaskFileExist, SaveSoundTaskFileEvent } from './pod-listener/sound.task.listener';
 
 @Injectable()
 export class RabbitmqListenerService implements OnApplicationBootstrap {
@@ -79,6 +81,30 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.DOCKER_EVENTS, 
                 handler: new DockerEventListener(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_DOWNLOAD_MULMED, 
+                handler: new SaveMultimnediaFile(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_DOWNLOAD_MULMED_EXIST, 
+                handler: new SaveMultimnediaFileExist(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_DOWNLOAD_MULMED_EVENT, 
+                handler: new SaveMultimediaFileEvent(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_DOWNLOAD_SOUND_TASK, 
+                handler: new SaveSoundTaskFile(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EXIST, 
+                handler: new SaveSoundTaskFileExist(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EVENT, 
+                handler: new SaveSoundTaskFileEvent(this.telegramServicePod) 
             },
         ].filter(l => l.exchange);
 

@@ -16,6 +16,14 @@ export class RabbitmqConnectionService implements OnModuleInit {
         try {
             this.connection = await amqp.connect(process.env.RABBITMQ_URL as string);
             this.channel = await this.connection.createChannel();
+
+            this.channel.on('error', (err: any) => {
+                console.error('❌ RabbitMQ channel error:', err.message);
+            });
+
+            this.connection.on('error', (err: any) => {
+                console.error('❌ RabbitMQ connection error:', err.message);
+            });
         } catch (err) {
             console.error('❌ RabbitMQ connection failed:', err);
             throw err;
@@ -29,5 +37,12 @@ export class RabbitmqConnectionService implements OnModuleInit {
             await new Promise(res => setTimeout(res, delay));
         }
         throw new Error('❌ Channel not ready after retries');
+    }
+
+    async assertExchange(exchange: string, type: 'direct' | 'fanout' | 'topic' = 'fanout') {
+        const channel = await this.waitForChannel();
+        await channel.assertExchange(exchange, type, { durable: true });
+        console.log(`✅ Exchange [${exchange}] asserted (${type})`);
+        return channel;
     }
 }
