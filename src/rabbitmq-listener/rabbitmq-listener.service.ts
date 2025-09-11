@@ -14,6 +14,27 @@ import { InfoFlowEditorFile } from './pod-listener/info.flow.editor.file';
 import { DockerEventListener } from './pod-listener/docker.event.listener';
 import { SaveMultimnediaFile, SaveMultimnediaFileExist, SaveMultimediaFileEvent } from './pod-listener/multimedia.listener';
 import { SaveSoundTaskFile, SaveSoundTaskFileExist, SaveSoundTaskFileEvent } from './pod-listener/sound.task.listener';
+import { IsReloadStatus } from './pod-listener/is.reload.status';
+
+// self dev
+import { 
+    InfoCreateSelfDev, 
+    InfoUpdateSelfDev, 
+    InfoDeleteSelfDev, 
+    InfoCreateSelfDevSound, 
+    InfoUpdateSelfDevSound, 
+    InfoDeleteSelfDevSound
+} from './pod-listener/info.self.development';
+
+// experience
+import { 
+    InfoCreateExperience, 
+    InfoUpdateExperience, 
+    InfoDeleteExperience, 
+    InfoCreateDetailExperience, 
+    InfoUpdateDetailExperience, 
+    InfoDeleteDetailExperience, 
+} from './pod-listener/info.experience';
 
 @Injectable()
 export class RabbitmqListenerService implements OnApplicationBootstrap {
@@ -71,7 +92,15 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             },
 
             // pod listeners
-            { 
+            // { 
+            //     exchange: process.env.INFO_DOWNLOAD_MULMED_EXIST, 
+            //     handler: new SaveMultimnediaFileExist(this.telegramServicePod) 
+            // },
+            // { 
+            //     exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EXIST, 
+            //     handler: new SaveSoundTaskFileExist(this.telegramServicePod) 
+            // },
+            {
                 exchange: process.env.CONSUME_DELETE_FLOW_EDITOR_AT_POD, 
                 handler: new DeleteTaskAtPodListener(this.telegramServicePod) 
             },
@@ -91,10 +120,6 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
                 exchange: process.env.INFO_DOWNLOAD_MULMED, 
                 handler: new SaveMultimnediaFile(this.telegramServicePod) 
             },
-            // { 
-            //     exchange: process.env.INFO_DOWNLOAD_MULMED_EXIST, 
-            //     handler: new SaveMultimnediaFileExist(this.telegramServicePod) 
-            // },
             { 
                 exchange: process.env.INFO_DOWNLOAD_MULMED_EVENT, 
                 handler: new SaveMultimediaFileEvent(this.telegramServicePod) 
@@ -103,13 +128,61 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
                 exchange: process.env.INFO_DOWNLOAD_SOUND_TASK, 
                 handler: new SaveSoundTaskFile(this.telegramServicePod) 
             },
-            // { 
-            //     exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EXIST, 
-            //     handler: new SaveSoundTaskFileExist(this.telegramServicePod) 
-            // },
             { 
                 exchange: process.env.INFO_DOWNLOAD_SOUND_TASK_EVENT, 
                 handler: new SaveSoundTaskFileEvent(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_IS_RELOAD_STATUS, 
+                handler: new IsReloadStatus(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_CREATE_SELF_DEV, 
+                handler: new InfoCreateSelfDev(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_UPDATE_SELF_DEV, 
+                handler: new InfoUpdateSelfDev(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_DELETE_SELF_DEV, 
+                handler: new InfoDeleteSelfDev(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_CREATE_SELF_DEV_SOUND, 
+                handler: new InfoCreateSelfDevSound(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_UPDATE_SELF_DEV_SOUND, 
+                handler: new InfoUpdateSelfDevSound(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_DELETE_SELF_DEV_SOUND, 
+                handler: new InfoDeleteSelfDevSound(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_CREATE_EXP, 
+                handler: new InfoCreateExperience(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_UPDATE_EXP, 
+                handler: new InfoUpdateExperience(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_DELETE_EXP, 
+                handler: new InfoDeleteExperience(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_CREATE_DETAIL_EXP, 
+                handler: new InfoCreateDetailExperience(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_UPDATE_DETAIL_EXP, 
+                handler: new InfoUpdateDetailExperience(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.INFO_PUBLISH_DELETE_DETAIL_EXP, 
+                handler: new InfoDeleteDetailExperience(this.telegramServicePod) 
             },
         ].filter(l => l.exchange);
 
