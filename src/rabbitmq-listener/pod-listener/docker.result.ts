@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 import { TelegramBotServicePod } from '../../telegram-bot/telegram-bot.service';
-// import Docker = require('dockerode');
 
 const escapeMarkdownV2 = (input?: any) => {
   if (input === undefined || input === null) return '';
@@ -10,7 +9,6 @@ const escapeMarkdownV2 = (input?: any) => {
 export class DockerResult {
   private readonly logger = new Logger(DockerResult.name);
   private messageTimers: Record<string, NodeJS.Timeout> = {};
-//   private docker = new Docker(); // dipakai jika perlu (tidak wajib untuk consumer ini)
 
   constructor(private readonly telegramService: TelegramBotServicePod) {}
 
