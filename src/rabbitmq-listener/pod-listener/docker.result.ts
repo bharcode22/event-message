@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { TelegramBotServicePod } from '../../telegram-bot/telegram-bot.service';
 
-const escapeMarkdownV2 = (input?: any) => {
+const escapeMarkdownV2 = (input?: any): string => {
   if (input === undefined || input === null) return '';
-  return String(input).replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+  return String(input).replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 };
 
 export class DockerResult {
@@ -18,7 +18,7 @@ export class DockerResult {
     const q = await channel.assertQueue('', { exclusive: true });
     await channel.bindQueue(q.queue, exchange, '');
 
-    this.logger.log(`Listening for messages on exchange "${exchange}"...`);
+    this.logger.log(`📡 Listening for messages on exchange "${exchange}"...`);
 
     await channel.consume(q.queue, async (msg: any) => {
       if (!msg) return;
@@ -29,18 +29,19 @@ export class DockerResult {
 
         const messageText = this.formatMessage(content);
 
-        // kirim ke telegram via TelegramBotServicePod (menggunakan CHAT_ID dari env)
+        // Kirim ke Telegram (pakai chatId dari env)
         await this.telegramService.sendMessage(messageText);
 
         this.logger.log(
-          `📤 Message forwarded to Telegram for host=${content.hostname} (${content.serverIp})`,
+          `📤 Forwarded to Telegram: host=${content.hostname} ip=${content.serverIp}`,
         );
 
         channel.ack(msg);
       } catch (err) {
         this.logger.error('❌ Failed to process message:', err);
-        // jangan retry berulang-ulang: nack dan drop
+
         try {
+          // drop supaya tidak retry terus
           channel.nack(msg, false, false);
         } catch (e) {
           this.logger.error('❌ Failed to nack message:', e);
@@ -57,31 +58,67 @@ export class DockerResult {
     const result = content.result ?? {};
 
     // Header
-    let message = `*📡 Docker Result*\n`;
-    message += `*Host:* ${escapeMarkdownV2(hostname)}\n`;
-    message += `*IP:* ${escapeMarkdownV2(serverIp)}\n`;
-    message += `*Command:* ${escapeMarkdownV2(command)}\n`;
-    message += `*Time:* ${escapeMarkdownV2(new Date(time).toLocaleString())}\n\n`;
+    let message = `*🐳 DOCKER RESULT*\n\n`;
+    message += `*🏷️ Host:* ${escapeMarkdownV2(hostname)}\n`;
+    message += `*🌐 IP:* ${escapeMarkdownV2(serverIp)}\n`;
+    message += `*⚡ Command:* \`${escapeMarkdownV2(command)}\`\n`;
+    message += `*🕒 Time:* ${escapeMarkdownV2(
+      new Date(time).toLocaleString(),
+    )}\n\n`;
 
-    // Pesan ringkasan (jika ada)
+    // Separator
+    message += `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n`;
+
+    // Ringkasan
     if (result?.message) {
-      message += `${escapeMarkdownV2(result.message)}\n\n`;
+      message += `*📝 Summary:*\n${escapeMarkdownV2(result.message)}\n\n`;
     }
 
-    // Daftar container (jika ada)
+    // Daftar container
     if (Array.isArray(result?.containers) && result.containers.length > 0) {
-      message += `*Daftar Container:*\n`;
-      for (let i = 0; i < result.containers.length; i++) {
-        const c = result.containers[i];
-        // gunakan bullet emoji + em dash untuk meminimalkan karakter reserved
+      // Hindari tanda kurung yang bisa bikin error
+      message += `*📦 Containers:* ${escapeMarkdownV2(
+        result.containers.length,
+      )}\n\n`;
+
+      for (const c of result.containers) {
         const name = escapeMarkdownV2(c.name ?? c.Names ?? 'unknown');
-        const id = escapeMarkdownV2(c.id ?? c.Id ?? '');
-        const status = escapeMarkdownV2(c.status ?? c.Status ?? '');
-        message += `• ${name} — ${id} — ${status}\n`;
+        const id = escapeMarkdownV2((c.id ?? c.Id ?? '').substring(0, 12));
+        const status = this.formatContainerStatus(
+          c.status ?? c.Status ?? '',
+        );
+
+        message += `🔹 *${name}*\n`;
+        message += `   ID: \`${id}\`\n`;
+        message += `   Status: ${status}\n`;
+
+        if (c.image) {
+          message += `   Image: ${escapeMarkdownV2(c.image)}\n`;
+        }
+        if (c.state) {
+          message += `   State: ${escapeMarkdownV2(c.state)}\n`;
+        }
+
+        message += `\n`;
       }
     }
 
+    // Footer
+    message += `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n`;
+    message += `_Generated at ${escapeMarkdownV2(
+      new Date().toLocaleTimeString(),
+    )}_`;
+
     return message;
+  }
+
+  private formatContainerStatus(status: string): string {
+    if (status.includes('Up')) return `🟢 ${escapeMarkdownV2(status)}`;
+    if (status.includes('Exit')) return `🔴 ${escapeMarkdownV2(status)}`;
+    if (status.includes('Restarting'))
+      return `🟡 ${escapeMarkdownV2(status)}`;
+    if (status.includes('Paused')) return `⏸️ ${escapeMarkdownV2(status)}`;
+    return escapeMarkdownV2(status);
   }
 
   private resetTimer(exchange: string, cb: () => Promise<void>) {
