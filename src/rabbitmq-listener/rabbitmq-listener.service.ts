@@ -15,6 +15,7 @@ import { DockerEventListener } from './pod-listener/docker.event.listener';
 import { SaveMultimnediaFile, SaveMultimnediaFileExist, SaveMultimediaFileEvent } from './pod-listener/multimedia.listener';
 import { SaveSoundTaskFile, SaveSoundTaskFileExist, SaveSoundTaskFileEvent } from './pod-listener/sound.task.listener';
 import { IsReloadStatus } from './pod-listener/is.reload.status';
+import { DockerResult } from './pod-listener/docker.result';
 
 // self dev
 import { 
@@ -184,6 +185,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
                 exchange: process.env.INFO_PUBLISH_DELETE_DETAIL_EXP, 
                 handler: new InfoDeleteDetailExperience(this.telegramServicePod) 
             },
+            { 
+                exchange: process.env.DOCKER_RESULTS, 
+                handler: new DockerResult(this.telegramServicePod) 
+            }
         ].filter(l => l.exchange);
 
         for (const { exchange, handler } of globalListener.filter(l => l.exchange)) {
