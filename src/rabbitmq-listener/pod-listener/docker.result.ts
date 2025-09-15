@@ -29,7 +29,6 @@ export class DockerResult {
 
         const messageText = this.formatMessage(content);
 
-        // Kirim ke Telegram (pakai chatId dari env)
         await this.telegramService.sendMessage(messageText);
 
         this.logger.log(
@@ -39,12 +38,8 @@ export class DockerResult {
         channel.ack(msg);
       } catch (err) {
         this.logger.error('❌ Failed to process message:', err);
-
-        try {
-          // drop supaya tidak retry terus
-          channel.nack(msg, false, false);
-        } catch (e) {
-          this.logger.error('❌ Failed to nack message:', e);
+        if (err.response?.body) {
+          this.logger.error('Telegram API response:', err.response.body);
         }
       }
     });
