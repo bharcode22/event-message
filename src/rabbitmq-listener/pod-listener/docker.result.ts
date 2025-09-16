@@ -44,68 +44,6 @@ export class DockerResult {
     });
   }
 
-  // private formatMessage(content: any): string {
-  //   const command = content.command ?? '';
-  //   const hostname = content.hostname ?? 'unknown';
-  //   const serverIp = content.serverIp ?? 'unknown';
-  //   const time = content.time ?? content.timestamp ?? new Date().toISOString();
-  //   const result = content.result ?? {};
-
-  //   // Header
-  //   let message = `*🐳 DOCKER RESULT*\n\n`;
-  //   message += `*🏷️ Host:* ${escapeMarkdownV2(hostname)}\n`;
-  //   message += `*🌐 IP:* ${escapeMarkdownV2(serverIp)}\n`;
-  //   message += `*⚡ Command:* \`${escapeMarkdownV2(command)}\`\n`;
-  //   message += `*🕒 Time:* ${escapeMarkdownV2(
-  //     new Date(time).toLocaleString(),
-  //   )}\n\n`;
-
-  //   // Separator
-  //   message += `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n`;
-
-  //   // Ringkasan
-  //   if (result?.message) {
-  //     message += `*📝 Summary:*\n${escapeMarkdownV2(result.message)}\n\n`;
-  //   }
-
-  //   // Daftar container
-  //   if (Array.isArray(result?.containers) && result.containers.length > 0) {
-  //     // Hindari tanda kurung yang bisa bikin error
-  //     message += `*📦 Containers:* ${escapeMarkdownV2(
-  //       result.containers.length,
-  //     )}\n\n`;
-
-  //     for (const c of result.containers) {
-  //       const name = escapeMarkdownV2(c.name ?? c.Names ?? 'unknown');
-  //       const id = escapeMarkdownV2((c.id ?? c.Id ?? '').substring(0, 12));
-  //       const status = this.formatContainerStatus(
-  //         c.status ?? c.Status ?? '',
-  //       );
-
-  //       message += `🔹 *${name}*\n`;
-  //       message += `   ID: \`${id}\`\n`;
-  //       message += `   Status: ${status}\n`;
-
-  //       if (c.image) {
-  //         message += `   Image: ${escapeMarkdownV2(c.image)}\n`;
-  //       }
-  //       if (c.state) {
-  //         message += `   State: ${escapeMarkdownV2(c.state)}\n`;
-  //       }
-
-  //       message += `\n`;
-  //     }
-  //   }
-
-  //   // Footer
-  //   message += `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n`;
-  //   message += `_Generated at ${escapeMarkdownV2(
-  //     new Date().toLocaleTimeString(),
-  //   )}_`;
-
-  //   return message;
-  // }
-
   private formatMessage(content: any): string {
     const command = content.command ?? '';
     const hostname = content.hostname ?? 'unknown';
