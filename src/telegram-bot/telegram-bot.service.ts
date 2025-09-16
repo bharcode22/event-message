@@ -64,21 +64,68 @@ export class TelegramConsumeMessage implements OnModuleInit {
       throw new Error('TELEGRAM_TOKEN_ADMIN is not set');
     }
 
-    this.bot = new TelegramBot(this.token, { polling: true });
-    this.logger.log('✅ Telegram Bot connected (polling enabled)');
+    await this.initBotWithRetry();
+  }
 
-    await this.bot.setMyCommands([
-      { command: 'debug', description: 'Cek bot dan lihat Chat ID' },
-      { command: 'containers', description: 'Lihat daftar container yang berjalan' },
-      { command: 'restart', description: 'Restart container (format: /restart <id>)' },
-      { command: 'stop', description: 'Stop container (format: /stop <id>)' },
-    ]);
+  private async initBotWithRetry(maxRetries = 5, delayMs = 2000) {
+    let attempt = 0;
 
-    this.bot.on('message', (msg) => {
-      this.logger.debug(
-        `📩 New message from chatId=${msg.chat.id}: ${msg.text}`,
-      );
-    });
+    while (attempt < maxRetries) {
+      try {
+        attempt++;
+        this.logger.log(`🚀 Initializing Telegram Bot (attempt ${attempt}/${maxRetries})...`);
+
+        this.bot = new TelegramBot(this.token!, {
+          polling: {
+            interval: 3000,
+            params: {
+              timeout: 60,
+            },
+          },
+          request: {
+            timeout: 60000,
+          } as any,
+        });
+
+        this.logger.log('✅ Telegram Bot connected (polling enabled)');
+
+        await this.bot.setMyCommands([
+          { command: 'debug', description: 'Cek bot dan lihat Chat ID' },
+          { command: 'containers', description: 'Lihat daftar container yang berjalan' },
+          { command: 'restart', description: 'Restart container (format: /restart <id>)' },
+          { command: 'stop', description: 'Stop container (format: /stop <id>)' },
+        ]);
+
+        this.bot.on('polling_error', async (err: any) => {
+          this.logger.error(`⚠️ Polling error: ${err.code || err.message}`);
+          this.logger.warn('⏳ Attempting to reconnect Telegram Bot...');
+          await this.reconnectBot();
+        });
+
+        return;
+      } catch (err: any) {
+        this.logger.error(`❌ Failed init Telegram Bot: ${err.message}`);
+        if (attempt >= maxRetries) {
+          this.logger.error('🚨 Maximum retry reached. Giving up.');
+          throw err;
+        }
+        const nextDelay = delayMs * attempt;
+        this.logger.warn(`⏳ Retry in ${nextDelay / 1000}s...`);
+        await new Promise((resolve) => setTimeout(resolve, nextDelay));
+      }
+    }
+  }
+
+  private async reconnectBot() {
+    try {
+      if (this.bot) {
+        this.logger.warn('♻️ Stopping old bot instance...');
+        this.bot.stopPolling();
+      }
+      await this.initBotWithRetry();
+    } catch (err: any) {
+      this.logger.error(`🚨 Failed to reconnect bot: ${err.message}`);
+    }
   }
 
   sendMessage(

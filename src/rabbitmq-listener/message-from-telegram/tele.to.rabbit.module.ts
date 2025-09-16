@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { DockerTelegramMessage } from './tele.to.rabbit.service';
 import { TelegramConsumeMessage } from '../../telegram-bot/telegram-bot.service';
+import { DockerTelegramMessage } from './tele.to.rabbit.service';
 
 @Module({
   imports: [],
   providers: [
-    DockerTelegramMessage,
     TelegramConsumeMessage,
+    DockerTelegramMessage,
   ],
   exports: [
-    DockerTelegramMessage,
     TelegramConsumeMessage,
+    DockerTelegramMessage,
   ],
 })
 export class TeleToRabbitModule {}
