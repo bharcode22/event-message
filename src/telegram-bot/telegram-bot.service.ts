@@ -12,30 +12,10 @@ export class TelegramBotServiceAdmin implements OnModuleInit {
   private readonly chatId = `${process.env.TELEGRAM_CHAT_ID}`;
 
   onModuleInit() {
-    this.bot = new TelegramBot(this.token, { polling: false });
-    this.logger.log(`🚀 Admin Telegram bot connected`);
-  }
-
-  async sendMessage(message: string, options?: TelegramBot.SendMessageOptions) {
-    if (!this.chatId) {
-      this.logger.error('❌ CHAT_ID not configured');
+    if (!this.token) {
+      this.logger.error('❌ TELEGRAM_TOKEN_POD not configured');
       return;
     }
-
-    await this.bot.sendMessage(this.chatId, message, {
-      parse_mode: 'MarkdownV2',
-      ...options,
-    });
-  }
-}
-
-export class TelegramBotServicePod implements OnModuleInit {
-  private bot: TelegramBot;
-  private readonly logger = new Logger(TelegramBotServicePod.name);
-  private readonly token = `${process.env.TELEGRAM_TOKEN_POD}`;
-  private readonly chatId = `${process.env.TELEGRAM_CHAT_ID}`;
-
-  onModuleInit() {
     this.bot = new TelegramBot(this.token, { polling: false });
     this.logger.log(`🚀 Pod Telegram bot connected`);
   }
@@ -46,10 +26,52 @@ export class TelegramBotServicePod implements OnModuleInit {
       return;
     }
 
-    await this.bot.sendMessage(this.chatId, message, {
-      parse_mode: 'MarkdownV2',
-      ...options,
-    });
+    try {
+      await this.bot.sendMessage(this.chatId, message, {
+        parse_mode: 'MarkdownV2',
+        ...options,
+      });
+    } catch (err: any) {
+      this.logger.error(`❌ Failed to send message to Telegram: ${err.message}`);
+      if (err.response?.body) {
+        this.logger.error('Telegram API response:', err.response.body);
+      }
+    }
+  }
+}
+
+export class TelegramBotServicePod implements OnModuleInit {
+  private bot: TelegramBot;
+  private readonly logger = new Logger(TelegramBotServicePod.name);
+  private readonly token = `${process.env.TELEGRAM_TOKEN_POD}`;
+  private readonly chatId = `${process.env.TELEGRAM_CHAT_ID}`;
+
+  onModuleInit() {
+    if (!this.token) {
+      this.logger.error('❌ TELEGRAM_TOKEN_POD not configured');
+      return;
+    }
+    this.bot = new TelegramBot(this.token, { polling: false });
+    this.logger.log(`🚀 Pod Telegram bot connected`);
+  }
+
+  async sendMessage(message: string, options?: TelegramBot.SendMessageOptions) {
+    if (!this.chatId) {
+      this.logger.error('❌ CHAT_ID not configured');
+      return;
+    }
+
+    try {
+      await this.bot.sendMessage(this.chatId, message, {
+        parse_mode: 'MarkdownV2',
+        ...options,
+      });
+    } catch (err: any) {
+      this.logger.error(`❌ Failed to send message to Telegram: ${err.message}`);
+      if (err.response?.body) {
+        this.logger.error('Telegram API response:', err.response.body);
+      }
+    }
   }
 }
 
