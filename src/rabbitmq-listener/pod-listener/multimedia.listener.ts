@@ -41,22 +41,21 @@ export class SaveMultimnediaFile {
 
 const summary = `
 📥 *Multimedia File Downloaded*
-${escapeMarkdownV2(info)}
 
 📌 *Pod Info:*
 \`\`\`
-
 🆔 ID        : ${escapeMarkdownV2(pod.id)}
 📡 Pod Name  : ${escapeMarkdownV2(pod.name)}
 🔌 MAC       : ${escapeMarkdownV2(pod.mac_address_pod)}
 \`\`\`
 
-${fileEmoji} *File Info:*
+📁 *File Info:*
 \`\`\`
-📂 File Name     : ${escapeMarkdownV2(fileName)}
-📂 File Path     : ${escapeMarkdownV2(filePath)}
-📂 Admin SHA256  : ${escapeMarkdownV2(adminSha || "-")}
-📂 Pod SHA256    : ${escapeMarkdownV2(podSha || "-")}
+📡 Status        : ${escapeMarkdownV2(info)}
+📄 File Name     : ${escapeMarkdownV2(fileName)}
+📍 File Path     : ${escapeMarkdownV2(filePath)}
+🔑 Admin SHA256  : ${escapeMarkdownV2(adminSha || "-")}
+🖥️ Pod SHA256    : ${escapeMarkdownV2(podSha || "-")}
 \`\`\`
 `.trim();
 
