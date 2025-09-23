@@ -143,3 +143,61 @@ function formatDurationMessage(parsed: any, fileName: string): string {
         this.messageTimers[exchange] = setTimeout(cb, 5000);
     }
 }
+
+export class DetectSha256Code {
+    private readonly logger = new Logger(DetectSongDuration.name);
+    private messageTimers: Record<string, NodeJS.Timeout> = {};
+
+    constructor(private readonly telegramService: TelegramBotServiceAdmin) {}
+
+    async handle(channel: any, exchange: string) {
+        const q = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(q.queue, exchange, '');
+        this.logger.log(`✅ Listening on exchange: ${exchange}`);
+
+        await channel.consume(q.queue, async (msg: any) => {
+            if (!msg) return;
+
+            const parsed = JSON.parse(msg.content.toString());
+            const fileName = parsed.tittle?.split('/').pop() || parsed.tittle;
+
+            this.resetTimer(exchange, async () => {
+                this.logger.log(`[${exchange}] Timer executed`);
+
+function formatSha256Message(parsed: any): string {
+const createdAt = parsed.created_at
+    ? new Date(parsed.created_at).toLocaleString("id-ID")
+    : "unknown";
+
+const updatedAt = parsed.updated_at
+    ? new Date(parsed.updated_at).toLocaleString("id-ID")
+    : "unknown";
+
+return `
+📂 *File Metadata Detected* 📂
+
+\`\`\`
+📄 Name       : ${parsed.name}
+📁 Path       : ${parsed.path}
+🔑 SHA256     : ${parsed.sha256 || "null"}
+📅 Created At : ${createdAt}
+📝 Updated At : ${updatedAt}
+\`\`\`
+`.trim();
+}
+
+                    const message = formatSha256Message(parsed);
+                    await this.telegramService.sendMessage(message, { parse_mode: 'MarkdownV2' });
+            });
+
+            channel.ack(msg);
+        });
+    }
+
+    private resetTimer(exchange: string, cb: () => Promise<void>) {
+        if (this.messageTimers[exchange]) {
+            clearTimeout(this.messageTimers[exchange]);
+        }
+        this.messageTimers[exchange] = setTimeout(cb, 5000);
+    }
+}

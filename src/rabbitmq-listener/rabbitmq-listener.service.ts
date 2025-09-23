@@ -5,7 +5,7 @@ import { TelegramBotServiceAdmin,  TelegramBotServicePod } from '../telegram-bot
 // admin
 import { CreateTaskListener, DeleteTaskListener } from './admin-listener/task.listener';
 import { downloadFlowEditorJson, ApplyFlowEditorJson } from './admin-listener/flow.editor.json';
-import { MinioUploadMusicEventListener, DetectSongDuration } from './admin-listener/minio.listener';
+import { MinioUploadMusicEventListener, DetectSongDuration, DetectSha256Code } from './admin-listener/minio.listener';
 import { flowEditorFileListener } from './admin-listener/flow.editor.file.listener';
 
 // pod
@@ -79,6 +79,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.SONG_DURATION_EXCHANGE, 
                 handler: new DetectSongDuration(this.telegramServiceAdmin) 
+            },
+            { 
+                exchange: process.env.MEDIA_FORENSIK_EXCHANGE, 
+                handler: new DetectSha256Code(this.telegramServiceAdmin) 
             },
             { 
                 exchange: process.env.SAVE_FLOW_EDITOR_JSON, 
