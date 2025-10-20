@@ -154,6 +154,9 @@ export class SaveMultimediaFileEvent {
                 const event = content.event || "-";
 
                 function escapeMarkdownV2(text: any): string {
+                    if (text === undefined || text === null) {
+                        return '-';
+                    }
                     return String(text)
                         .replace(/\\/g, '\\\\')
                         .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
