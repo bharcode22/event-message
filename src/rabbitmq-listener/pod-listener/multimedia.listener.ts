@@ -23,8 +23,11 @@ export class SaveMultimnediaFile {
                 const adminSha = content.adminSha;
                 const podSha = content.podSha;
 
-                function escapeMarkdownV2(text: string): string {
-                    return text
+                function escapeMarkdownV2(text: string | undefined | null): string {
+                    if (text === undefined || text === null) {
+                        return '-';
+                    }
+                    return String(text)
                         .replace(/\\/g, '\\\\')
                         .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
                 }

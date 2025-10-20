@@ -11,7 +11,7 @@ import { flowEditorFileListener } from './admin-listener/flow.editor.file.listen
 // pod
 import { SaveFlowEditorAtPod, DeleteTaskAtPodListener } from './pod-listener/task.listener';
 import { InfoFlowEditorFile } from './pod-listener/info.flow.editor.file';
-import { DockerEventListener } from './pod-listener/docker.event.listener';
+import { DockerEventListener, DockerReady } from './pod-listener/docker.event.listener';
 import { SaveMultimnediaFile, SaveMultimnediaFileExist, SaveMultimediaFileEvent } from './pod-listener/multimedia.listener';
 import { SaveSoundTaskFile, SaveSoundTaskFileExist, SaveSoundTaskFileEvent } from './pod-listener/sound.task.listener';
 import { IsReloadStatus } from './pod-listener/is.reload.status';
@@ -121,6 +121,10 @@ export class RabbitmqListenerService implements OnApplicationBootstrap {
             { 
                 exchange: process.env.DOCKER_EVENTS, 
                 handler: new DockerEventListener(this.telegramServicePod) 
+            },
+            { 
+                exchange: process.env.DOCKER_READY, 
+                handler: new DockerReady(this.telegramServicePod) 
             },
             { 
                 exchange: process.env.INFO_DOWNLOAD_MULMED, 
